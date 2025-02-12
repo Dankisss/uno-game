@@ -5,7 +5,6 @@ import bg.sofia.uni.fmi.mjt.uno.card.CardColor;
 import bg.sofia.uni.fmi.mjt.uno.card.exception.GameAlreadyStartedException;
 import bg.sofia.uni.fmi.mjt.uno.card.exception.InvalidCardException;
 import bg.sofia.uni.fmi.mjt.uno.card.exception.InvalidGameException;
-import bg.sofia.uni.fmi.mjt.uno.card.exception.InvalidGameOwnerException;
 import bg.sofia.uni.fmi.mjt.uno.deck.UnoDeck;
 import bg.sofia.uni.fmi.mjt.uno.game.history.GameHistory;
 import bg.sofia.uni.fmi.mjt.uno.player.Player;
@@ -111,6 +110,10 @@ public class UnoCardGame implements UnoGame, MultiplayerGame {
         return unoStartDeck;
     }
 
+    public Player currentPlayer() {
+        return currentPlayer;
+    }
+
     @Override
     public Player nextPlayer() {
         moveToNextPlayer();
@@ -130,7 +133,7 @@ public class UnoCardGame implements UnoGame, MultiplayerGame {
         remainingPlayers.add(player);
     }
 
-    public void startGame(Player player) {
+    public void startGame() {
 
         if (gameStatus != GameStatus.AVAILABLE) {
             throw new GameAlreadyStartedException("Game has already started!");
@@ -147,6 +150,7 @@ public class UnoCardGame implements UnoGame, MultiplayerGame {
         }
 
         Card firstCard = unoStartDeck.removeTop();
+
         while (firstCard.color().equals(CardColor.WILD)) {
             unoToAddDeck.addCard(firstCard);
             firstCard = unoStartDeck.removeTop();

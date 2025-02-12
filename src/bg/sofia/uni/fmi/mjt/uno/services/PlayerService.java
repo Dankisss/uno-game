@@ -1,7 +1,9 @@
 package bg.sofia.uni.fmi.mjt.uno.services;
 
+import bg.sofia.uni.fmi.mjt.uno.card.Card;
 import bg.sofia.uni.fmi.mjt.uno.card.exception.PlayerAlreadyExistsException;
 import bg.sofia.uni.fmi.mjt.uno.card.exception.PlayerIsNotRegisteredException;
+import bg.sofia.uni.fmi.mjt.uno.card.exception.PlayerNotLoggedInException;
 import bg.sofia.uni.fmi.mjt.uno.player.Player;
 
 import java.nio.channels.SocketChannel;
@@ -9,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PlayerService {
     private final Set<Player> players = new HashSet<>();
@@ -49,6 +52,19 @@ public class PlayerService {
     }
 
     public Player getPlayer(SocketChannel channel) {
+        if (!channels.containsKey(channel)) {
+            throw new PlayerNotLoggedInException("You need to log in first");
+        }
+
         return channels.get(channel);
+    }
+
+    public String showHand(SocketChannel channel) {
+        Player player = channels.get(channel);
+
+        return player.hand()
+                .stream()
+                .map(Card::toString)
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 }

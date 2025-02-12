@@ -2,8 +2,10 @@ package bg.sofia.uni.fmi.mjt.uno.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
 import java.net.InetSocketAddress;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Scanner;
 
@@ -56,7 +58,8 @@ public class Client {
                         buffer.flip();
                         byte[] data = new byte[buffer.remaining()];
                         buffer.get(data);
-                        System.out.println("Server: " + new String(data));
+                        System.out.println("Server: ");
+                        System.out.println(new String(data));
                     }
                 }
             }
@@ -72,7 +75,6 @@ public class Client {
             ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
 
             while (true) {
-                System.out.print("Enter command: ");
                 String message = scanner.nextLine();
 
                 if ("exit".equalsIgnoreCase(message)) {

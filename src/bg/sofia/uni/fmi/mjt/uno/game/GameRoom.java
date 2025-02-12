@@ -1,5 +1,6 @@
 package bg.sofia.uni.fmi.mjt.uno.game;
 
+import bg.sofia.uni.fmi.mjt.uno.card.exception.PlayerNotLoggedInException;
 import bg.sofia.uni.fmi.mjt.uno.player.Player;
 
 import java.io.IOException;
@@ -51,6 +52,23 @@ public class GameRoom {
 
             }
 
+        }
+    }
+
+    public void sendMessage(String message, Player player) {
+        SocketChannel channel = players.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().equals(player))
+                .findFirst()
+                .orElseThrow(() -> new PlayerNotLoggedInException("Player left"))
+                .getKey();
+
+        ByteBuffer buffer = ByteBuffer.wrap((message + "\n").getBytes());
+
+        try {
+            channel.write(buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

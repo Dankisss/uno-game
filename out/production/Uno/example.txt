@@ -1,0 +1,9 @@
+register --username=dak --password=123
+login --username=dak --password=123
+
+
+register --username=daka --password=123
+login --username=daka --password=123
+
+create-game --number-of-players=2 --game-id=daka
+join --game-id=daka

@@ -1,9 +1,7 @@
 package bg.sofia.uni.fmi.mjt.uno.services;
 
-import bg.sofia.uni.fmi.mjt.uno.card.exception.GameAlreadyStartedException;
-import bg.sofia.uni.fmi.mjt.uno.card.exception.InvalidGameException;
-import bg.sofia.uni.fmi.mjt.uno.card.exception.PlayerAlreadyCreatedGameException;
-import bg.sofia.uni.fmi.mjt.uno.card.exception.PlayerAlreadyInGameException;
+import bg.sofia.uni.fmi.mjt.uno.card.Card;
+import bg.sofia.uni.fmi.mjt.uno.card.exception.*;
 import bg.sofia.uni.fmi.mjt.uno.game.GameRoom;
 import bg.sofia.uni.fmi.mjt.uno.game.GameStatus;
 import bg.sofia.uni.fmi.mjt.uno.player.Player;
@@ -14,6 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class UnoGameService {
+
     private final Map<String, GameRoom> games = new HashMap<>();
     private final Map<Player, GameRoom> playerGames = new HashMap<>();
     private final PlayerService playerService;
@@ -37,7 +36,11 @@ public class UnoGameService {
             throw new PlayerAlreadyCreatedGameException("You have already created a game.");
         }
 
-        games.put(gameId, new GameRoom(numberOfPLayers));
+        GameRoom gameRoom = new GameRoom(numberOfPLayers);
+
+        games.put(gameId, gameRoom);
+        playerGames.put(creator, gameRoom);
+
         return "Game created successfully";
     }
 
@@ -72,6 +75,10 @@ public class UnoGameService {
 
         GameRoom gameRoom = games.get(gameId);
 
+        if (gameRoom == null) {
+            throw new InvalidGameException("Game is not found");
+        }
+
         if (gameRoom.remainingSlots() <= 0) {
             throw new GameAlreadyStartedException("The game is full. Please join another game");
         }
@@ -88,4 +95,63 @@ public class UnoGameService {
                 .stream()
                 .anyMatch(gameRoom -> gameRoom.players().contains(player));
     }
+
+    public String startGame(SocketChannel channel) {
+        Player player = playerService.getPlayer(channel);
+
+        if (!playerGames.containsKey(player)) {
+            throw new GameCouldNotStartException("You don't have a game to start");
+        }
+
+        GameRoom gameRoom = playerGames.get(player);
+        gameRoom.game().startGame();
+
+        String message = "Game started";
+
+        gameRoom.broadcastMessage(message, channel);
+        gameRoom.sendMessage("It's your turn", gameRoom.game().currentPlayer());
+        return message;
+    }
+
+    public String showLastCard(SocketChannel channel) {
+        Player player = playerService.getPlayer(channel);
+
+        GameRoom gameRoom = getGameRoomOfPlayer(channel);
+
+        if (!gameRoom.game().gameStatus().equals(GameStatus.STARTED)) {
+            throw new GameNotStartedException("The game is not started yet");
+        }
+
+        return gameRoom
+                .game()
+                .toAddDeck()
+                .getTopCard()
+                .toString();
+    }
+
+    private GameRoom getGameRoomOfPlayer(SocketChannel channel) {
+        return playerGames.values()
+                .stream()
+                .filter(room -> room.channels().contains(channel))
+                .findFirst()
+                .orElseThrow(() -> new InvalidGameException("You are not in a game"));
+    }
+
+    public String playCard(SocketChannel channel, int cardId) {
+        Player player = playerService.getPlayer(channel);
+        GameRoom gameRoom = getGameRoomOfPlayer(channel);
+
+        if (!gameRoom.game().currentPlayer().equals(player)) {
+            throw new PlayerNotOnTurnException("It is not your turn");
+        }
+
+        Card card = player.playCard(cardId);
+        gameRoom.game().playCard(player, card);
+
+        gameRoom.broadcastMessage(player.displayName() + " played " + card, channel);
+
+        gameRoom.sendMessage("It's your turn", gameRoom.game().nextPlayer());
+        return "You played: " + card;
+    }
+
 }

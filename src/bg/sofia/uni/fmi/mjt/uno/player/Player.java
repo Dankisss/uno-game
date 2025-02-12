@@ -4,9 +4,7 @@ import bg.sofia.uni.fmi.mjt.uno.card.Card;
 import bg.sofia.uni.fmi.mjt.uno.deck.UnoDeck;
 import bg.sofia.uni.fmi.mjt.uno.game.UnoCardGame;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static bg.sofia.uni.fmi.mjt.uno.card.utils.Validation.checkIndex;
 
@@ -47,7 +45,7 @@ public class Player {
         }
     }
 
-    public Card getCardByIndex(int index) {
+    public Card playCard(int index) {
         checkIndex(index, cards);
 
         lastPlayedCard = cards.remove(index);
@@ -57,6 +55,10 @@ public class Player {
 
     public Card lastPlayedCard() {
         return lastPlayedCard;
+    }
+
+    public Collection<Card> hand() {
+        return cards.values();
     }
 
     public void joinGame(UnoCardGame game) {

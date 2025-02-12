@@ -25,31 +25,19 @@ public class CommandParser {
         String[] parts = trimmedInput.split("\\s+");
         String commandName = parts[0];
 
-        switch (commandName) {
-            case "register" -> {
-                return ofRegisterCommand(playerService, parts);
-            }
-            case "login" -> {
-                return ofLoginCommand(channel, playerService, parts);
-            }
-            case "logout" -> {
-                return ofLogoutCommand(channel, playerService);
-            }
-            case "list-games" -> {
-                return ofListGamesCommand(channel, gameService, parts);
-            }
-            case "create-game" -> {
-                return ofCreateGameCommand(channel, gameService, parts);
-            }
-            case "join" -> {
-                return ofJoinGameCommand(channel, gameService, parts);
-            }
-            case "start" -> {
-                return ofStartGameCommand(channel, gameService);
-            }
-            default ->
-                throw new IllegalArgumentException("Unknown command: " + commandName);
-        }
+        return switch (commandName) {
+            case "register" -> ofRegisterCommand(playerService, parts);
+            case "login" -> ofLoginCommand(channel, playerService, parts);
+            case "logout" -> ofLogoutCommand(channel, playerService);
+            case "list-games" -> ofListGamesCommand(channel, gameService, parts);
+            case "create-game" -> ofCreateGameCommand(channel, gameService, parts);
+            case "join" ->  ofJoinGameCommand(channel, gameService, parts);
+            case "start" -> ofStartGameCommand(channel, gameService);
+            case "show-hand" -> ofShowHandCommand(channel, playerService);
+            case "show-last-card" -> ofShowLastCardCommand(channel, gameService);
+            case "play" -> ofPlayCardCommand(channel, gameService, parts);
+            default -> throw new IllegalArgumentException("Unknown command: " + commandName);
+        };
     }
 
     private static Command ofRegisterCommand(PlayerService playerService, String[] parts) {
@@ -201,5 +189,31 @@ public class CommandParser {
 
     private static Command ofStartGameCommand(SocketChannel channel, UnoGameService gameService) {
         return new StartGameCommand(channel, gameService);
+    }
+
+    private static Command ofShowHandCommand(SocketChannel channel, PlayerService playerService) {
+        return new ShowHandCommand(channel, playerService);
+    }
+
+    private static Command ofShowLastCardCommand(SocketChannel channel, UnoGameService gameService) {
+        return new ShowLastCardCommand(channel, gameService);
+    }
+
+    private static Command ofPlayCardCommand(SocketChannel channel, UnoGameService gameService, String[] parts) {
+        if (parts.length != 2) {
+            throw new InvalidCommandException("The play card command is invalid");
+        }
+
+        String[] parameterOne = parts[1].split(ARGUMENT_DELIMITER);
+
+        if (!parameterOne[0].equals("--card-id")) {
+            throw new InvalidCommandException("The command parameter is invalid");
+        }
+
+        if (!isNumeric(parameterOne[1])) {
+            throw new InvalidCommandException(parameterOne[1] + " is not a positive number");
+        }
+
+        return new PlayCardCommand(channel, gameService, Integer.parseInt(parameterOne[1]));
     }
 }

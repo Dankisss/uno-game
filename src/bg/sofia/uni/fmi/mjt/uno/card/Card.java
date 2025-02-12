@@ -35,10 +35,8 @@ public abstract class Card {
 
     @Override
     public String toString() {
-        return "Card{" +
-                "index=" + index +
+        return "index=" + index +
                 ", color=" + color +
-                ", value='" + value + '\'' +
-                '}';
+                ", value=" + value;
     }
 }
