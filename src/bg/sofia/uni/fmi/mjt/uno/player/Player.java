@@ -2,36 +2,83 @@ package bg.sofia.uni.fmi.mjt.uno.player;
 
 import bg.sofia.uni.fmi.mjt.uno.card.Card;
 import bg.sofia.uni.fmi.mjt.uno.deck.UnoDeck;
+import bg.sofia.uni.fmi.mjt.uno.game.UnoCardGame;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import static bg.sofia.uni.fmi.mjt.uno.card.utils.Validation.checkIndex;
 
 public class Player {
 
     private final String username;
-    private final List<Card> remainingCards;
+    private String displayName;
+    private final String password;
+    private Map<Integer,Card> cards;
     private Card lastPlayedCard;
 
-    public Player(String username, List<Card> remainingCards) {
+    public Player(String username, String password) {
+        this.password = password;
         this.username = username;
-        this.remainingCards = remainingCards;
     }
 
-    public void drawCards(UnoDeck unoDeck, int amount) {
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String displayName() {
+        return displayName == null ? username : displayName;
+    }
+
+    public void drawCards(UnoDeck unoStartDeck, UnoDeck toAddDeck, int amount) {
+        if (cards == null) {
+            cards = new HashMap<>();
+        }
+
         for (int i = 0; i < amount; i++) {
-            remainingCards.add(unoDeck.removeTop());
+            if (unoStartDeck.isEmpty()) {
+                unoStartDeck.refill(toAddDeck);
+            }
+
+            Card top = unoStartDeck.removeTop();
+
+            cards.put(top.index(), top);
         }
     }
 
-    public void playCard(int index) {
-        checkIndex(index, remainingCards);
+    public Card getCardByIndex(int index) {
+        checkIndex(index, cards);
 
-        lastPlayedCard = remainingCards.get(index);
+        lastPlayedCard = cards.remove(index);
+
+        return cards.get(index);
     }
 
     public Card lastPlayedCard() {
         return lastPlayedCard;
     }
 
+    public void joinGame(UnoCardGame game) {
+        game.joinPlayer(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Player player = (Player) o;
+        return Objects.equals(username, player.username);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(username);
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "username='" + username + '\'' +
+                '}';
+    }
 }
